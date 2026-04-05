@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+:root {
+  /* Primary */
+  --color-primary: #533afd;
+  --color-primary-hover: #4434d4;
+  --color-primary-deep: #2e2b8c;
+  --color-primary-light: #b9b9f9;
+  --color-primary-mid: #665efd;
+
+  /* Text */
+  --color-heading: #061b31;
+  --color-body: #64748d;
+  --color-label: #273951;
+
+  /* Brand & Dark */
+  --color-brand-dark: #1c1e54;
+  --color-dark-navy: #0d253d;
+
+  /* Accent */
+  --color-ruby: #ea2261;
+  --color-magenta: #f96bee;
+  --color-magenta-light: #ffd7ef;
+  --color-lemon: #9b6829;
+
+  /* Status */
+  --color-success: #15be53;
+  --color-success-text: #108c3d;
+  --color-success-bg: rgba(21, 190, 83, 0.2);
+  --color-success-border: rgba(21, 190, 83, 0.4);
+
+  /* Surface & Border */
+  --color-surface: #ffffff;
+  --color-border: #e5edf5;
+  --color-border-purple: #b9b9f9;
+  --color-border-soft-purple: #d6d9fc;
+  --color-border-magenta: #ffd7ef;
+
+  /* Shadows */
+  --shadow-blue: rgba(50, 50, 93, 0.25);
+  --shadow-dark-blue: rgba(3, 3, 39, 0.25);
+  --shadow-black: rgba(0, 0, 0, 0.1);
+  --shadow-ambient: rgba(23, 23, 23, 0.08);
+  --shadow-soft: rgba(23, 23, 23, 0.06);
+
+  /* shadcn semantic tokens (mapped to design system) */
+  --background: #ffffff;
+  --foreground: #061b31;
+  --muted: #f9fafb;
+  --muted-foreground: #64748d;
+  --popover: #ffffff;
+  --popover-foreground: #061b31;
+  --card: #ffffff;
+  --card-foreground: #061b31;
+  --input: #e5edf5;
+  --ring: #533afd;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #273951;
+  --accent: #f9fafb;
+  --accent-foreground: #061b31;
+  --destructive: #ea2261;
+  --destructive-foreground: #ffffff;
+  --radius: 0.375rem;
+}
+
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-deep: var(--color-primary-deep);
+  --color-primary-light: var(--color-primary-light);
+  --color-heading: var(--color-heading);
+  --color-body: var(--color-body);
+  --color-label: var(--color-label);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-success: var(--color-success);
+  --color-success-text: var(--color-success-text);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-ruby: var(--color-ruby);
+  --color-magenta: var(--color-magenta);
+
+  /* shadcn tokens registered for Tailwind */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-source-code-pro);
+
+  /* Shadow scale from DESIGN.md */
+  --shadow-ambient: 0px 3px 6px var(--shadow-soft);
+  --shadow-standard: 0px 15px 35px var(--shadow-ambient);
+  --shadow-elevated: 0px 30px 45px -30px var(--shadow-blue), 0px 18px 36px -18px var(--shadow-black);
+  --shadow-deep: 0px 14px 21px -14px var(--shadow-dark-blue), 0px 8px 17px -8px var(--shadow-black);
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-body);
+}
+
+/* Hide scrollbar for tab navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

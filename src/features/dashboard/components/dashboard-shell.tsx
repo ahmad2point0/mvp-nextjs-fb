@@ -52,6 +52,10 @@ export function DashboardShell() {
         });
         // Auth confirmed — prefetch dashboard data
         queryClient.prefetchQuery({
+          queryKey: ["notifications"],
+          queryFn: () => api.get("/notifications"),
+        });
+        queryClient.prefetchQuery({
           queryKey: ["donations", undefined],
           queryFn: () => api.get("/donations"),
         });

@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
-import { notifyAdmins } from "@/global/lib/create-notification";
+import { createNotification, notifyAdmins } from "@/global/lib/create-notification";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -81,6 +81,26 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // If linked to an aid request, mark it as fulfilled and notify the student
+  if (aid_request_id) {
+    const { data: aidRequest } = await supabase
+      .from("aid_requests")
+      .update({ status: "fulfilled" })
+      .eq("id", aid_request_id)
+      .select("student_id")
+      .single();
+
+    if (aidRequest?.student_id) {
+      await createNotification(
+        supabase,
+        aidRequest.student_id,
+        "Aid request fulfilled",
+        `Your aid request has been funded with a donation of Rs. ${Number(amount).toLocaleString()}.`,
+        "check-circle"
+      );
+    }
   }
 
   // Notify all admins about the new donation

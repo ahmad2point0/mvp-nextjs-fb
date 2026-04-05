@@ -43,8 +43,11 @@ export function useCreateDonation() {
   return useMutation({
     mutationFn: (input: CreateDonationInput) =>
       api.post<Donation>("/donations", input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["donations"] });
+      if (variables.aid_request_id) {
+        queryClient.invalidateQueries({ queryKey: ["aid-requests"] });
+      }
     },
   });
 }

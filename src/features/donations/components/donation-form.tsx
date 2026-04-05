@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { Card, Button } from "@/global/components";
 import { useCreateDonation, useUploadReceipt } from "../hooks";
 import { useAuthStore } from "@/global/stores/auth-store";
+import { useAidRequests } from "@/features/aid-requests/hooks";
+
+const FIXED_DONATION_AMOUNT = 1200;
 
 const categories = {
   Money: ["School Fees", "Medical Support", "General Fund"],
@@ -17,7 +20,12 @@ const categories = {
 
 const paymentMethods = ["Cash Donation", "JazzCash", "Easypaisa"];
 
-export function DonationForm() {
+interface DonationFormProps {
+  aidRequestId?: string | null;
+  onDonated?: () => void;
+}
+
+export function DonationForm({ aidRequestId, onDonated }: DonationFormProps) {
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [payment, setPayment] = useState("");
@@ -31,19 +39,32 @@ export function DonationForm() {
   const createDonation = useCreateDonation();
   const uploadReceipt = useUploadReceipt();
 
+  // If funding an aid request, look it up from cached data
+  const { data: aidRequests } = useAidRequests();
+  const linkedRequest = aidRequestId
+    ? aidRequests?.find((r) => r.id === aidRequestId)
+    : null;
+
+  const isLinked = !!linkedRequest;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    if (!category) return setError("Please select a category");
-    if (!amount) return setError("Amount is required");
+    const effectiveCategory = isLinked ? "General Fund" : category;
+    const effectiveAmount = isLinked ? FIXED_DONATION_AMOUNT : parseFloat(amount);
+
+    if (!isLinked && !effectiveCategory) return setError("Please select a category");
+    if (!isLinked && !amount) return setError("Amount is required");
     if (!payment) return setError("Payment method is required");
 
-    let parentCategory = "";
-    for (const [group, items] of Object.entries(categories)) {
-      if (items.includes(category)) {
-        parentCategory = group;
-        break;
+    let parentCategory = "Money";
+    if (!isLinked) {
+      for (const [group, items] of Object.entries(categories)) {
+        if (items.includes(effectiveCategory)) {
+          parentCategory = group;
+          break;
+        }
       }
     }
 
@@ -63,8 +84,9 @@ export function DonationForm() {
     createDonation.mutate(
       {
         category: parentCategory,
-        subcategory: category,
-        amount: parseFloat(amount),
+        subcategory: effectiveCategory,
+        amount: effectiveAmount,
+        aid_request_id: linkedRequest?.id,
         payment_method: payment,
         transaction_id: transactionId || undefined,
         message: message || undefined,
@@ -72,7 +94,11 @@ export function DonationForm() {
       },
       {
         onSuccess: () => {
-          toast.success("Donation submitted successfully!");
+          toast.success(
+            isLinked
+              ? "Donation submitted! The aid request has been fulfilled."
+              : "Donation submitted successfully!"
+          );
           setCategory("");
           setAmount("");
           setPayment("");
@@ -80,6 +106,7 @@ export function DonationForm() {
           setMessage("");
           setReceiptFile(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
+          onDonated?.();
         },
         onError: (err) => toast.error(err.message),
       }
@@ -91,32 +118,57 @@ export function DonationForm() {
   return (
     <Card bordered className="max-w-[480px] mx-auto">
       <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-6">
-        Make a Donation
+        {isLinked ? "Fund Aid Request" : "Make a Donation"}
       </h2>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full px-3 py-3 rounded border border-border text-sm text-heading focus:border-primary focus:outline-none"
-        >
-          <option value="" disabled>Select Donation Category</option>
-          {Object.entries(categories).map(([group, items]) => (
-            <optgroup key={group} label={group}>
-              {items.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+      {isLinked && (
+        <div className="bg-primary/5 border border-primary/20 rounded p-4 mb-6 space-y-1.5">
+          <p className="text-sm text-heading font-medium">
+            Aid Type: {linkedRequest.aid_type}
+          </p>
+          <p className="text-sm text-body">{linkedRequest.description}</p>
+          <p className="text-sm text-heading">
+            Fixed Donation: <span className="font-medium">Rs. {FIXED_DONATION_AMOUNT.toLocaleString()}</span>
+          </p>
+        </div>
+      )}
 
-        <input
-          type="number"
-          placeholder="Amount (Rs)"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
-        />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        {/* Category — hidden when funding an aid request */}
+        {!isLinked && (
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-3 py-3 rounded border border-border text-sm text-heading focus:border-primary focus:outline-none"
+          >
+            <option value="" disabled>Select Donation Category</option>
+            {Object.entries(categories).map(([group, items]) => (
+              <optgroup key={group} label={group}>
+                {items.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        )}
+
+        {/* Amount — read-only when funding an aid request */}
+        {isLinked ? (
+          <input
+            type="text"
+            value={`Rs. ${FIXED_DONATION_AMOUNT.toLocaleString()}`}
+            readOnly
+            className="w-full px-3 py-3 rounded border border-border text-sm text-heading bg-gray-50 cursor-not-allowed"
+          />
+        ) : (
+          <input
+            type="number"
+            placeholder="Amount (Rs)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
+          />
+        )}
 
         <h4 className="text-primary text-sm font-normal mt-1">Payment Method</h4>
 
@@ -164,7 +216,11 @@ export function DonationForm() {
         {error && <p className="text-ruby text-xs">{error}</p>}
 
         <Button type="submit" fullWidth disabled={isPending}>
-          {isPending ? "Submitting..." : "Confirm Donation"}
+          {isPending
+            ? "Submitting..."
+            : isLinked
+              ? `Donate Rs. ${FIXED_DONATION_AMOUNT.toLocaleString()}`
+              : "Confirm Donation"}
         </Button>
       </form>
     </Card>

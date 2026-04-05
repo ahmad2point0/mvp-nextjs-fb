@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { FileText, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { DonationForm } from "@/features/donations";
@@ -21,8 +22,11 @@ export function DonationsPanel() {
   const { data: donations, isLoading } = useDonations();
   const updateStatus = useUpdateDonationStatus();
   const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const isAdmin = user?.role === "admin";
+  const aidRequestId = searchParams.get("aid_request_id");
 
   const totalPages = Math.ceil((donations?.length ?? 0) / PAGE_SIZE);
   const paginated = donations?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -37,10 +41,17 @@ export function DonationsPanel() {
     );
   }
 
+  function handleDonated() {
+    // Clear the aid_request_id from URL after successful donation
+    router.push("/dashboard?tab=donations", { scroll: false });
+  }
+
   return (
     <div className="space-y-10">
       {/* Donors see the form; admin doesn't need it */}
-      {!isAdmin && <DonationForm />}
+      {!isAdmin && (
+        <DonationForm aidRequestId={aidRequestId} onDonated={handleDonated} />
+      )}
 
       <div>
         <h3 className="text-heading text-lg font-light tracking-tight mb-4">

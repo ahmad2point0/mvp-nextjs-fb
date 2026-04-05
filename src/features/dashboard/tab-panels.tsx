@@ -1,6 +1,5 @@
 "use client";
 
-import type { ComponentType } from "react";
 import type { UserRole } from "@/global/stores/auth-store";
 import dynamic from "next/dynamic";
 import { TabSkeleton } from "@/global/components/tab-skeleton";
@@ -100,38 +99,51 @@ const ApplyPanel = dynamic(
   { loading: () => FormSkeleton() }
 );
 
-// Role-specific overview panels
-const OVERVIEW_PANELS: Record<UserRole, ComponentType> = {
-  admin: AdminOverviewPanel,
-  donor: DonorOverviewPanel,
-  volunteer: VolunteerOverviewPanel,
-  student: StudentOverviewPanel,
-};
-
-// Shared panels keyed by tab key
-const SHARED_PANELS: Record<string, ComponentType> = {
-  users: UserManagementPanel,
-  donations: DonationsPanel,
-  "aid-requests": AidRequestsPanel,
-  volunteers: VolunteerManagementPanel,
-  tasks: VolunteerManagementPanel,
-  reports: ReportsPanel,
-  notifications: NotificationsPanel,
-  profile: ProfilePanel,
-  settings: SettingsPanel,
-  apply: ApplyPanel,
-};
-
 /**
- * Resolve the panel component for a given tab key and user role.
- * The "overview" tab renders a role-specific panel; all others use shared panels.
+ * Renders the correct panel for a given tab key and user role.
+ * Uses static JSX references so React sees stable component identities.
  */
-export function getPanelComponent(
-  tabKey: string,
-  role: UserRole
-): ComponentType | null {
+export function PanelRouter({
+  tabKey,
+  role,
+}: {
+  tabKey: string;
+  role: UserRole;
+}) {
   if (tabKey === "overview") {
-    return OVERVIEW_PANELS[role] ?? OVERVIEW_PANELS.student;
+    switch (role) {
+      case "admin":
+        return <AdminOverviewPanel />;
+      case "donor":
+        return <DonorOverviewPanel />;
+      case "volunteer":
+        return <VolunteerOverviewPanel />;
+      default:
+        return <StudentOverviewPanel />;
+    }
   }
-  return SHARED_PANELS[tabKey] ?? null;
+
+  switch (tabKey) {
+    case "users":
+      return <UserManagementPanel />;
+    case "donations":
+      return <DonationsPanel />;
+    case "aid-requests":
+      return <AidRequestsPanel />;
+    case "volunteers":
+    case "tasks":
+      return <VolunteerManagementPanel />;
+    case "reports":
+      return <ReportsPanel />;
+    case "notifications":
+      return <NotificationsPanel />;
+    case "profile":
+      return <ProfilePanel />;
+    case "settings":
+      return <SettingsPanel />;
+    case "apply":
+      return <ApplyPanel />;
+    default:
+      return <TabSkeleton />;
+  }
 }

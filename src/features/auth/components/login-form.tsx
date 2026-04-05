@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/global/components";
 import { useLogin } from "../hooks";
 
@@ -28,7 +29,7 @@ export function LoginForm() {
     login.mutate(
       { email, password },
       {
-        onError: (err) => setError(err.message),
+        onError: (err) => toast.error(err.message),
       }
     );
   }
@@ -72,15 +73,19 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="text-center mt-4 text-sm text-body">
-        Don&apos;t have an account?{" "}
+      <div className="flex items-center justify-between mt-4">
         <Link
-          href="/register"
-          className="text-primary hover:text-primary-hover"
+          href="/forgot-password"
+          className="text-sm text-primary hover:text-primary-hover"
         >
-          Register
+          Forgot password?
         </Link>
-      </p>
+        <p className="text-sm text-body">
+          <Link href="/register" className="text-primary hover:text-primary-hover">
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

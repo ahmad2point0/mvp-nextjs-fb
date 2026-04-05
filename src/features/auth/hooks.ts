@@ -45,6 +45,25 @@ export function useRegister() {
   });
 }
 
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: (email: string) =>
+      api.post("/auth/reset-password", { email }),
+  });
+}
+
+export function useUpdatePassword() {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: (password: string) =>
+      api.post("/auth/update-password", { password }),
+    onSuccess: () => {
+      router.push("/login");
+    },
+  });
+}
+
 export function useLogout() {
   const { logout } = useAuthStore();
   const router = useRouter();

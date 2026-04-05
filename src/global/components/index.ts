@@ -7,3 +7,4 @@ export { RoleBadge } from "./role-badge";
 export { TabSkeleton } from "./tab-skeleton";
 export { TableSkeleton } from "./table-skeleton";
 export { FormSkeleton } from "./form-skeleton";
+export { Pagination } from "./pagination";

@@ -36,7 +36,7 @@ export async function GET() {
   ]);
 
   const totalDonations = donations.data?.reduce(
-    (sum, d) => sum + (d.amount || 0),
+    (sum, d) => sum + Number(d.amount || 0),
     0
   );
 

@@ -41,6 +41,7 @@ export const ROLE_TABS: Record<UserRole, TabDefinition[]> = {
   ],
   donor: [
     tab("overview", "Overview", BarChart3),
+    tab("aid-requests", "Aid Requests", ClipboardList),
     tab("donations", "My Donations", DollarSign),
     tab("notifications", "Notifications", Bell),
     tab("profile", "Profile", User),

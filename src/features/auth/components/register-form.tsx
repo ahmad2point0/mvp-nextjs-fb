@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Button } from "@/global/components";
 import { useRegister } from "../hooks";
 
@@ -39,7 +40,7 @@ export function RegisterForm() {
     register.mutate(
       { email, password, full_name: name, phone: phone || undefined, role },
       {
-        onError: (err) => setError(err.message),
+        onError: (err) => toast.error(err.message),
       }
     );
   }

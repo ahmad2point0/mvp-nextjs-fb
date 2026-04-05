@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
+import { notifyAdmins } from "@/global/lib/create-notification";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET() {
@@ -69,6 +70,14 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Notify all admins about the new application
+  await notifyAdmins(
+    supabase,
+    "New volunteer application",
+    `A new volunteer application for the role "${role}" has been submitted.`,
+    "user-plus"
+  );
 
   return NextResponse.json(data, { status: 201 });
 }

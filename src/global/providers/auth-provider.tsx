@@ -12,30 +12,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function getSession() {
       setLoading(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
 
-        if (profile) {
-          setUser({
-            id: profile.id,
-            email: user.email!,
-            role: profile.role,
-            full_name: profile.full_name,
-            phone: profile.phone,
-            approved: profile.approved,
-          });
+          if (profile) {
+            setUser({
+              id: profile.id,
+              email: user.email!,
+              role: profile.role,
+              full_name: profile.full_name,
+              phone: profile.phone,
+              approved: profile.approved,
+            });
+          } else {
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
-      } else {
+      } catch {
         setUser(null);
       }
     }

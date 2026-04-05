@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  // Admin and donors see all requests; students see only their own
+  if (profile?.role !== "admin" && profile?.role !== "donor") {
     query = query.eq("student_id", user.id);
   }
 

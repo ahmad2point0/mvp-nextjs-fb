@@ -17,6 +17,7 @@ interface VolunteerApplication {
   motivation: string;
   status: string;
   created_at: string;
+  profiles?: { full_name: string; email: string } | null;
 }
 
 export function useVolunteerTasks(status?: string) {
@@ -43,6 +44,42 @@ export function useVolunteerApplications() {
   return useQuery<VolunteerApplication[]>({
     queryKey: ["volunteer-applications"],
     queryFn: () => api.get("/volunteer-applications"),
+  });
+}
+
+export function useCreateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: {
+      volunteer_id: string;
+      student_name: string;
+      task_description: string;
+      due_date: string;
+    }) => api.post("/volunteer-tasks", input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["volunteer-tasks"] });
+    },
+  });
+}
+
+export function useUpdateApplicationStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      api.patch(`/volunteer-applications/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["volunteer-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+export function useApprovedVolunteers() {
+  return useQuery<{ id: string; full_name: string; email: string }[]>({
+    queryKey: ["approved-volunteers"],
+    queryFn: () => api.get("/admin/users?role=volunteer"),
   });
 }
 

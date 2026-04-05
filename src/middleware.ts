@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const publicPaths = ["/", "/about", "/contact", "/login", "/register"];
+const publicPaths = ["/", "/about", "/contact", "/login", "/register", "/forgot-password", "/update-password"];
 
 // Legacy dashboard sub-routes → tab query param redirects
 const legacyRedirects: Record<string, string> = {
@@ -55,6 +55,13 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Redirect authenticated users from landing page to dashboard
+  if (user && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
 
   // Allow public paths
   if (publicPaths.some((p) => pathname === p)) {

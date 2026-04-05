@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 async function requireAdmin(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
   const {
@@ -19,7 +19,7 @@ async function requireAdmin(supabase: Awaited<ReturnType<typeof createServerSupa
   return user;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const admin = await requireAdmin(supabase);
 
@@ -27,10 +27,14 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("full_name");
+  let query = supabase.from("profiles").select("*").order("full_name");
+
+  const role = request.nextUrl.searchParams.get("role");
+  if (role) {
+    query = query.eq("role", role);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -15,7 +15,6 @@ export function useNotifications() {
   return useQuery<Notification[]>({
     queryKey: ["notifications"],
     queryFn: () => api.get("/notifications"),
-    refetchInterval: 30_000,
   });
 }
 

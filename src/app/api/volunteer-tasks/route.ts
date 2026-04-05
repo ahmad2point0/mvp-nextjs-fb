@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
+import { createNotification } from "@/global/lib/create-notification";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -49,12 +50,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { student_name, task_description, due_date } = body;
+  // Only admin can create/assign tasks
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
 
-  if (!student_name || !task_description || !due_date) {
+  if (profile?.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await request.json();
+  const { volunteer_id, student_name, task_description, due_date } = body;
+
+  if (!volunteer_id || !student_name || !task_description || !due_date) {
     return NextResponse.json(
-      { error: "Student name, description, and due date are required" },
+      { error: "Volunteer, student name, description, and due date are required" },
       { status: 400 }
     );
   }
@@ -62,7 +74,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("volunteer_tasks")
     .insert({
-      volunteer_id: user.id,
+      volunteer_id,
       student_name,
       task_description,
       due_date,
@@ -74,6 +86,15 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Notify the assigned volunteer
+  await createNotification(
+    supabase,
+    volunteer_id,
+    "New task assigned",
+    `You have been assigned a new task: "${task_description}" (due ${new Date(due_date).toLocaleDateString()}).`,
+    "clipboard-list"
+  );
 
   return NextResponse.json(data, { status: 201 });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, Button } from "@/global/components";
 import { useCreateAidRequest } from "../hooks";
 
@@ -20,14 +21,12 @@ export function AidRequestForm() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const createRequest = useCreateAidRequest();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setSuccess(false);
 
     if (!aidType) return setError("Please select an aid type");
     if (!amount) return setError("Amount is required");
@@ -41,12 +40,12 @@ export function AidRequestForm() {
       },
       {
         onSuccess: () => {
-          setSuccess(true);
+          toast.success("Aid request submitted!");
           setAidType("");
           setAmount("");
           setDescription("");
         },
-        onError: (err) => setError(err.message),
+        onError: (err) => toast.error(err.message),
       }
     );
   }
@@ -56,12 +55,6 @@ export function AidRequestForm() {
       <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-6">
         Education Aid Request
       </h2>
-
-      {success && (
-        <div className="bg-success-bg border border-success-border text-success-text text-sm rounded px-3 py-2 mb-4 text-center">
-          Aid request submitted successfully!
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         <select

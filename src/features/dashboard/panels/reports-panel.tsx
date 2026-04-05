@@ -1,10 +1,16 @@
 "use client";
 
-import { StatsCard } from "@/features/reports";
-import { useAdminStats } from "@/features/admin/hooks";
+import {
+  StatsCard,
+  DonationsChart,
+  AidStatusChart,
+  UsersByRoleChart,
+} from "@/features/reports";
+import { useAdminStats, useChartData } from "@/features/admin/hooks";
 
 export function ReportsPanel() {
   const { data: stats, isLoading } = useAdminStats();
+  const { data: chartData } = useChartData();
 
   const cards = [
     {
@@ -32,11 +38,19 @@ export function ReportsPanel() {
       <h2 className="text-heading text-2xl font-light tracking-tight mb-6">
         Reports & Statistics
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
         {cards.map((s) => (
           <StatsCard key={s.title} {...s} />
         ))}
       </div>
+
+      {chartData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <DonationsChart data={chartData.donationsByMonth} />
+          <AidStatusChart data={chartData.aidByStatus} />
+          <UsersByRoleChart data={chartData.usersByRole} />
+        </div>
+      )}
     </>
   );
 }

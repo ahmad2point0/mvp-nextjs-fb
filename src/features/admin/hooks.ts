@@ -40,3 +40,16 @@ export function useAdminStats() {
     queryFn: () => api.get("/admin/stats"),
   });
 }
+
+interface ChartData {
+  donationsByMonth: { month: string; amount: number; count: number }[];
+  aidByStatus: { status: string; count: number }[];
+  usersByRole: { role: string; count: number }[];
+}
+
+export function useChartData() {
+  return useQuery<ChartData>({
+    queryKey: ["admin", "chart-data"],
+    queryFn: () => api.get("/admin/chart-data"),
+  });
+}

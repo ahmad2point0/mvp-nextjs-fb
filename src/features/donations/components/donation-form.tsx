@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Upload } from "lucide-react";
+import { toast } from "sonner";
 import { Card, Button } from "@/global/components";
-import { useCreateDonation } from "../hooks";
+import { useCreateDonation, useUploadReceipt } from "../hooks";
+import { useAuthStore } from "@/global/stores/auth-store";
 
 const categories = {
   Money: ["School Fees", "Medical Support", "General Fund"],
@@ -21,14 +24,16 @@ export function DonationForm() {
   const [transactionId, setTransactionId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { user } = useAuthStore();
   const createDonation = useCreateDonation();
+  const uploadReceipt = useUploadReceipt();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setSuccess(false);
 
     if (!category) return setError("Please select a category");
     if (!amount) return setError("Amount is required");
@@ -42,6 +47,19 @@ export function DonationForm() {
       }
     }
 
+    let receiptUrl: string | undefined;
+    if (receiptFile && user) {
+      try {
+        receiptUrl = await uploadReceipt.mutateAsync({
+          file: receiptFile,
+          userId: user.id,
+        });
+      } catch {
+        toast.error("Failed to upload receipt");
+        return;
+      }
+    }
+
     createDonation.mutate(
       {
         category: parentCategory,
@@ -50,32 +68,31 @@ export function DonationForm() {
         payment_method: payment,
         transaction_id: transactionId || undefined,
         message: message || undefined,
+        receipt_url: receiptUrl,
       },
       {
         onSuccess: () => {
-          setSuccess(true);
+          toast.success("Donation submitted successfully!");
           setCategory("");
           setAmount("");
           setPayment("");
           setTransactionId("");
           setMessage("");
+          setReceiptFile(null);
+          if (fileInputRef.current) fileInputRef.current.value = "";
         },
-        onError: (err) => setError(err.message),
+        onError: (err) => toast.error(err.message),
       }
     );
   }
+
+  const isPending = createDonation.isPending || uploadReceipt.isPending;
 
   return (
     <Card bordered className="max-w-[480px] mx-auto">
       <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-6">
         Make a Donation
       </h2>
-
-      {success && (
-        <div className="bg-success-bg border border-success-border text-success-text text-sm rounded px-3 py-2 mb-4 text-center">
-          Donation submitted successfully!
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         <select
@@ -122,6 +139,20 @@ export function DonationForm() {
           className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
         />
 
+        <div>
+          <label className="flex items-center gap-2 text-sm text-heading mb-1.5">
+            <Upload className="w-4 h-4 text-primary" />
+            Receipt (optional)
+          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
+            className="w-full text-sm text-body file:mr-3 file:px-3 file:py-1.5 file:rounded file:border-0 file:text-sm file:bg-primary/10 file:text-primary hover:file:bg-primary/20 file:cursor-pointer"
+          />
+        </div>
+
         <textarea
           placeholder="Additional Message (optional)"
           rows={3}
@@ -132,8 +163,8 @@ export function DonationForm() {
 
         {error && <p className="text-ruby text-xs">{error}</p>}
 
-        <Button type="submit" fullWidth disabled={createDonation.isPending}>
-          {createDonation.isPending ? "Submitting..." : "Confirm Donation"}
+        <Button type="submit" fullWidth disabled={isPending}>
+          {isPending ? "Submitting..." : "Confirm Donation"}
         </Button>
       </form>
     </Card>

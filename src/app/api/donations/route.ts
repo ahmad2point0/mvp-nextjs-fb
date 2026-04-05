@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
+import { notifyAdmins } from "@/global/lib/create-notification";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { category, subcategory, amount, beneficiary_id, payment_method, transaction_id, message } = body;
+  const { category, subcategory, amount, beneficiary_id, aid_request_id, payment_method, transaction_id, message, receipt_url } = body;
 
   if (!category || !amount || !payment_method) {
     return NextResponse.json(
@@ -68,9 +69,11 @@ export async function POST(request: NextRequest) {
       subcategory: subcategory || null,
       amount,
       beneficiary_id: beneficiary_id || null,
+      aid_request_id: aid_request_id || null,
       payment_method,
       transaction_id: transaction_id || null,
       message: message || null,
+      receipt_url: receipt_url || null,
       status: "pending",
     })
     .select()
@@ -79,6 +82,14 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Notify all admins about the new donation
+  await notifyAdmins(
+    supabase,
+    "New donation received",
+    `A new donation of Rs. ${Number(amount).toLocaleString()} has been submitted and is pending review.`,
+    "dollar-sign"
+  );
 
   return NextResponse.json(data, { status: 201 });
 }

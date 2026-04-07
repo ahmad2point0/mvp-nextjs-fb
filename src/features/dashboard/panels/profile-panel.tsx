@@ -45,13 +45,22 @@ export function ProfilePanel() {
             <label className="text-label text-xs uppercase tracking-wide">
               Status
             </label>
-            <p className="text-heading text-sm mt-1">
-              {user.approved ? (
-                <span className="text-success">Approved</span>
+            <div className="flex items-center gap-2 mt-1">
+              {user.is_verified ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">
+                  Verified
+                </span>
               ) : (
-                <span className="text-[#9b6829]">Pending Approval</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                  Unverified
+                </span>
               )}
-            </p>
+              {user.is_blocked && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                  Blocked
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </Card>

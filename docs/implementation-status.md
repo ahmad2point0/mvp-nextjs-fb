@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-04-05
+Last updated: 2026-04-08
 
 ## Completed
 
@@ -21,7 +21,8 @@ Last updated: 2026-04-05
 ### Phase 3: Public Pages (7 routes)
 - [x] Home (`/`) — Animated landing with GSAP ScrollTrigger
   - Hero with gradient orbs, grid overlay, animated entrance
-  - Impact stats with counter animation
+  - Impact stats with counter animation — **live data** from `/api/public/stats`
+  - Donations auto-formatted with K+/M+ suffixes via `formatCurrencyStat`
   - System Modules, How It Works, Volunteer Jobs, Donation Needs
   - Testimonials, FAQ (accordion), CTA banner, About section
 - [x] About (`/about`)
@@ -41,11 +42,12 @@ Last updated: 2026-04-05
 - [x] Join Volunteer — Application form connected to API
 - [x] Admin — Live stats + approval table from API
 
-### Phase 5: Feature Modules (7 modules)
+### Phase 5: Feature Modules (8 modules)
 - [x] Each module has: components/ + hooks.ts + index.ts barrel
 - [x] All forms connected to real Supabase via API routes
 - [x] TanStack Query hooks for data fetching + cache invalidation
 - [x] Loading states and success/error feedback in all forms
+- [x] `features/home` — `usePublicStats` hook powering the homepage counter
 
 ### Phase 6: Supabase Database
 - [x] 6 tables with RLS: profiles, donations, aid_requests, volunteer_tasks, volunteer_applications, notifications
@@ -53,10 +55,11 @@ Last updated: 2026-04-05
 - [x] Security advisory: 0 issues
 
 ### Phase 7: Backend API
-- [x] 17 API route handlers across auth, donations, aid-requests, volunteer-tasks, volunteer-applications, notifications, admin
+- [x] 18 API route handlers across auth, donations, aid-requests, volunteer-tasks, volunteer-applications, notifications, admin, public
 - [x] Server-side Supabase client with cookie-based auth
 - [x] Admin role checks on protected endpoints
 - [x] Typed API wrapper (`global/lib/api.ts`)
+- [x] Public/unauthenticated namespace: `GET /api/public/stats` (edge-cached 60s)
 
 ### Phase 8: Auth Integration
 - [x] Auth middleware (`middleware.ts`) — protects /dashboard/*, redirects auth pages
@@ -76,6 +79,21 @@ Last updated: 2026-04-05
 - [x] Playwright config with dev server
 - [x] E2E tests: public pages, auth flow validation, dashboard redirect
 
+### Phase 11: User Verification & Documents
+- [x] Database migration: dropped `profiles.approved`, added `profiles.is_blocked`
+- [x] New `documents` table (user_id, document_type, storage_path, bucket) with RLS
+- [x] Private storage buckets: `cnic-documents`, `student-documents` with per-user RLS
+- [x] `admin_get_users` SECURITY DEFINER RPC joining `auth.users` for email + `email_confirmed_at`
+- [x] OTP-based email verification using Supabase built-in auth (`signUp` + `verifyOtp({ type: 'signup' })`)
+- [x] New auth API routes: `POST /api/auth/verify-otp`, `POST /api/auth/resend-otp`
+- [x] Login API returns `401 { code: "unverified" }` or `403 { code: "blocked" }`
+- [x] Document API routes: `POST /api/documents`, `GET /api/documents/[userId]` with 10-min signed URLs
+- [x] `features/documents` module: `useUploadDocument`, `useUserDocuments`, `DocumentUploadForm`, `UserDocumentsViewer`
+- [x] New pages: `/upload-documents` (step 2 of signup), `/verify-otp` (step 3 of signup, with resend cooldown)
+- [x] Admin panel rework: `UserManagementTable` replacing `ApprovalTable`. Filters (role/verified/blocked), block/unblock actions, document viewer modal
+- [x] Removed `approved` references across the codebase (auth store, auth provider, admin/volunteers/dashboard hooks, profile panel, public stats)
+- [x] Middleware: `/upload-documents` and `/verify-otp` added to public paths
+
 ### Build Verification
 - [x] `bun run build` — 28 routes, 0 TypeScript errors
 - [x] All static pages pre-rendered, API routes dynamic
@@ -91,10 +109,12 @@ Last updated: 2026-04-05
 
 ### Advanced Features
 - [ ] Real-time notifications via Supabase Realtime
-- [ ] Email verification flow
-- [ ] Password reset
-- [ ] File upload for donation receipts
+- [x] Email verification flow (OTP via Supabase built-in)
+- [x] Password reset
+- [x] File upload for donation receipts (and identity documents)
 - [ ] Dashboard analytics charts
+- [ ] Image cropping for document uploads
+- [ ] Drag-and-drop file uploads
 
 ### Deployment
 - [ ] Vercel deployment configuration

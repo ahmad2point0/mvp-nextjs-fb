@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("*")
+            .select("id, role, full_name, phone, is_blocked")
             .eq("id", user.id)
             .single();
 
@@ -31,7 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               role: profile.role,
               full_name: profile.full_name,
               phone: profile.phone,
-              approved: profile.approved,
+              is_blocked: profile.is_blocked,
+              is_verified: !!user.email_confirmed_at,
             });
           } else {
             setUser(null);
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, role, full_name, phone, is_blocked")
           .eq("id", session.user.id)
           .single();
 
@@ -67,7 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: profile.role,
             full_name: profile.full_name,
             phone: profile.phone,
-            approved: profile.approved,
+            is_blocked: profile.is_blocked,
+            is_verified: !!session.user.email_confirmed_at,
           });
         }
       }

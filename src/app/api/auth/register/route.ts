@@ -23,10 +23,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    const message = error.message.includes("rate limit")
+    const isRateLimit = error.message.toLowerCase().includes("rate limit");
+    const message = isRateLimit
       ? "Too many sign-up attempts. Please wait a few minutes and try again."
       : error.message;
-    return NextResponse.json({ error: message }, { status: 429 });
+    return NextResponse.json(
+      { error: message },
+      { status: isRateLimit ? 429 : 400 }
+    );
   }
 
   // Create profile row
@@ -36,7 +40,6 @@ export async function POST(request: NextRequest) {
       full_name,
       phone: phone || null,
       role,
-      approved: role === "donor" || role === "student",
     });
 
     if (profileError) {

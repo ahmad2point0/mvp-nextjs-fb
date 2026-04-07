@@ -9,10 +9,28 @@ interface AdminStats {
   activeVolunteers: number;
 }
 
-export function useAdminUsers() {
+export interface AdminUserFilters {
+  role?: string;
+  verified?: boolean;
+  blocked?: boolean;
+}
+
+function toQueryString(filters?: AdminUserFilters) {
+  if (!filters) return "";
+  const params = new URLSearchParams();
+  if (filters.role) params.set("role", filters.role);
+  if (filters.verified !== undefined)
+    params.set("verified", String(filters.verified));
+  if (filters.blocked !== undefined)
+    params.set("blocked", String(filters.blocked));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export function useAdminUsers(filters?: AdminUserFilters) {
   return useQuery<UserProfile[]>({
-    queryKey: ["admin", "users"],
-    queryFn: () => api.get("/admin/users"),
+    queryKey: ["admin", "users", filters ?? {}],
+    queryFn: () => api.get(`/admin/users${toQueryString(filters)}`),
   });
 }
 
@@ -25,7 +43,7 @@ export function useUpdateUser() {
       ...body
     }: {
       id: string;
-      approved?: boolean;
+      is_blocked?: boolean;
       role?: string;
     }) => api.patch(`/admin/users/${id}`, body),
     onSuccess: () => {

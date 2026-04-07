@@ -1,2 +1,7 @@
-export { ApprovalTable } from "./components/approval-table";
-export { useAdminUsers, useUpdateUser, useAdminStats } from "./hooks";
+export { UserManagementTable } from "./components/user-management-table";
+export {
+  useAdminUsers,
+  useUpdateUser,
+  useAdminStats,
+  type AdminUserFilters,
+} from "./hooks";

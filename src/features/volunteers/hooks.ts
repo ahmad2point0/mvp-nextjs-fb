@@ -76,10 +76,10 @@ export function useUpdateApplicationStatus() {
   });
 }
 
-export function useApprovedVolunteers() {
+export function useActiveVolunteers() {
   return useQuery<{ id: string; full_name: string; email: string }[]>({
-    queryKey: ["approved-volunteers"],
-    queryFn: () => api.get("/admin/users?role=volunteer"),
+    queryKey: ["active-volunteers"],
+    queryFn: () => api.get("/admin/users?role=volunteer&blocked=false"),
   });
 }
 

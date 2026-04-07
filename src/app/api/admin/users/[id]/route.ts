@@ -27,7 +27,7 @@ export async function PATCH(
   }
 
   const body = await request.json();
-  const allowedFields = ["approved", "role"];
+  const allowedFields = ["is_blocked", "role"];
   const updates: Record<string, unknown> = {};
   for (const key of allowedFields) {
     if (key in body) updates[key] = body[key];

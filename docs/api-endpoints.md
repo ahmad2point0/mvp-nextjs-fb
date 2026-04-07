@@ -19,8 +19,32 @@ Extends Supabase `auth.users`. Created on user registration.
 | role | text | NOT NULL, CHECK (admin/donor/volunteer/student) | User role |
 | full_name | text | NOT NULL | Display name |
 | phone | text | nullable | Phone number |
-| approved | boolean | default false | Admin approval status |
+| is_blocked | boolean | default false | Admin has disabled this account |
 | created_at | timestamptz | default now() | Registration timestamp |
+
+Note: `is_verified` is not a column — it is derived from `auth.users.email_confirmed_at`
+and exposed by `/api/auth/me` and the `admin_get_users` RPC.
+
+### documents
+
+Identity verification documents uploaded at registration.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK, gen_random_uuid() | Document ID |
+| user_id | uuid | FK -> profiles, CASCADE | Owner |
+| document_type | text | CHECK (cnic_front/cnic_back/student_doc) | Slot type |
+| storage_path | text | NOT NULL | Path within the bucket (`${user_id}/…`) |
+| bucket | text | CHECK (cnic-documents/student-documents) | Storage bucket name |
+| uploaded_at | timestamptz | default now() | |
+
+Unique index: `(user_id, document_type)` — re-uploads upsert the existing row.
+
+Storage buckets (both **private**):
+- `cnic-documents` — CNIC front + back for donors / volunteers
+- `student-documents` — single supporting document for students
+
+Storage RLS: users can read/write only within `${auth.uid()}/`; admins can read all.
 
 ### donations
 
@@ -108,10 +132,21 @@ All routes are in `src/app/api/` as Next.js Route Handlers using `createServerSu
 
 | Method | Path | Description | Status |
 |--------|------|-------------|--------|
-| POST | `/api/auth/register` | Register user + create profile row | Done |
-| POST | `/api/auth/login` | Login (email/password) | Done |
+| POST | `/api/auth/register` | Register user + create profile row (sends OTP email) | Done |
+| POST | `/api/auth/login` | Login (email/password). Returns `401 { code: "unverified" }` or `403 { code: "blocked" }` when applicable | Done |
 | POST | `/api/auth/logout` | Clear session | Done |
-| GET | `/api/auth/me` | Get current user + profile | Done |
+| GET | `/api/auth/me` | Get current user + profile + `is_verified` | Done |
+| POST | `/api/auth/verify-otp` | Verify 6-digit signup code and establish session | Done |
+| POST | `/api/auth/resend-otp` | Resend signup OTP email | Done |
+| POST | `/api/auth/reset-password` | Send password-reset email | Done |
+| POST | `/api/auth/update-password` | Set new password for signed-in user | Done |
+
+### Documents
+
+| Method | Path | Description | Status |
+|--------|------|-------------|--------|
+| POST | `/api/documents` | Record a document row after a client-side storage upload | Done |
+| GET | `/api/documents/[userId]` | List a user's documents with 10-minute signed download URLs (self or admin) | Done |
 
 ### Donations
 
@@ -153,6 +188,34 @@ All routes are in `src/app/api/` as Next.js Route Handlers using `createServerSu
 
 | Method | Path | Description | Status |
 |--------|------|-------------|--------|
-| GET | `/api/admin/users` | List all users (admin only) | Done |
-| PATCH | `/api/admin/users/[id]` | Update user (approve/role) | Done |
+| GET | `/api/admin/users` | List users via `admin_get_users` RPC. Optional filters: `?role=`, `?verified=`, `?blocked=` | Done |
+| PATCH | `/api/admin/users/[id]` | Update allowed fields: `is_blocked`, `role` | Done |
 | GET | `/api/admin/stats` | System-wide statistics | Done |
+
+### Public
+
+Unauthenticated endpoints used by the marketing/landing pages.
+
+| Method | Path | Description | Status |
+|--------|------|-------------|--------|
+| GET | `/api/public/stats` | Aggregated impact stats for the homepage counter | Done |
+
+#### `GET /api/public/stats`
+
+Returns aggregated platform metrics. No auth required. Edge-cached for 60s with `stale-while-revalidate=300`.
+
+```json
+{
+  "totalDonations": 1250000,
+  "studentsSupported": 75,
+  "activeVolunteers": 48,
+  "tasksCompleted": 200
+}
+```
+
+| Field | Source | Definition |
+|-------|--------|------------|
+| `totalDonations` | `donations` | SUM(`amount`) WHERE `status = 'approved'` |
+| `studentsSupported` | `aid_requests` | COUNT(DISTINCT `student_id`) WHERE `status` IN (`approved`, `fulfilled`) |
+| `activeVolunteers` | `profiles` | COUNT(*) WHERE `role = 'volunteer'` AND `is_blocked = false` |
+| `tasksCompleted` | `volunteer_tasks` | COUNT(*) WHERE `status = 'completed'` |

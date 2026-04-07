@@ -38,7 +38,8 @@ export function DashboardShell() {
         role: string;
         full_name: string;
         phone: string | null;
-        approved: boolean;
+        is_blocked: boolean;
+        is_verified: boolean;
       }>("/auth/me")
       .then((profile) => {
         if (cancelled) return;
@@ -48,7 +49,8 @@ export function DashboardShell() {
           role: profile.role as UserRole,
           full_name: profile.full_name,
           phone: profile.phone,
-          approved: profile.approved,
+          is_blocked: profile.is_blocked,
+          is_verified: profile.is_verified,
         });
         // Auth confirmed — prefetch dashboard data
         queryClient.prefetchQuery({

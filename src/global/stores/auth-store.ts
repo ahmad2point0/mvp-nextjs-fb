@@ -8,7 +8,8 @@ export interface UserProfile {
   role: UserRole;
   full_name: string;
   phone: string | null;
-  approved: boolean;
+  is_blocked: boolean;
+  is_verified: boolean;
 }
 
 interface AuthState {

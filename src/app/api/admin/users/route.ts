@@ -1,7 +1,9 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
 import { NextResponse, type NextRequest } from "next/server";
 
-async function requireAdmin(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
+async function requireAdmin(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>
+) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -27,14 +29,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  let query = supabase.from("profiles").select("*").order("full_name");
-
   const role = request.nextUrl.searchParams.get("role");
-  if (role) {
-    query = query.eq("role", role);
-  }
+  const verifiedParam = request.nextUrl.searchParams.get("verified");
+  const blockedParam = request.nextUrl.searchParams.get("blocked");
 
-  const { data, error } = await query;
+  const verified =
+    verifiedParam === null ? null : verifiedParam === "true";
+  const blocked = blockedParam === null ? null : blockedParam === "true";
+
+  const { data, error } = await supabase.rpc("admin_get_users", {
+    p_role: role,
+    p_verified: verified,
+    p_blocked: blocked,
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -31,6 +31,10 @@ src/
 │   ├── (auth)/                   # Route group (no layout impact)
 │   │   ├── login/page.tsx        # /login
 │   │   ├── register/page.tsx     # /register
+│   │   ├── upload-documents/page.tsx   # /upload-documents (step 2 of signup)
+│   │   ├── verify-otp/page.tsx         # /verify-otp (step 3 of signup)
+│   │   ├── forgot-password/page.tsx
+│   │   ├── update-password/page.tsx
 │   │   └── logout/page.tsx       # /logout
 │   ├── dashboard/                # Protected area
 │   │   ├── layout.tsx            # Dashboard layout (sidebar + content)
@@ -47,7 +51,14 @@ src/
 │       │   ├── register/route.ts
 │       │   ├── login/route.ts
 │       │   ├── logout/route.ts
-│       │   └── me/route.ts
+│       │   ├── me/route.ts
+│       │   ├── verify-otp/route.ts     # OTP email verification
+│       │   ├── resend-otp/route.ts
+│       │   ├── reset-password/route.ts
+│       │   └── update-password/route.ts
+│       ├── documents/
+│       │   ├── route.ts                # POST — record uploaded doc
+│       │   └── [userId]/route.ts       # GET — signed URLs (self or admin)
 │       ├── donations/route.ts
 │       ├── aid-requests/route.ts
 │       ├── volunteer-tasks/
@@ -57,15 +68,21 @@ src/
 │       ├── notifications/
 │       │   ├── route.ts
 │       │   └── [id]/route.ts
-│       └── admin/
-│           ├── users/route.ts
-│           ├── users/[id]/route.ts
-│           └── stats/route.ts
+│       ├── admin/
+│       │   ├── users/route.ts
+│       │   ├── users/[id]/route.ts
+│       │   └── stats/route.ts
+│       └── public/
+│           └── stats/route.ts    # Unauthenticated homepage impact stats
 │
 ├── features/                     # Feature modules (domain logic)
 │   ├── auth/
-│   │   ├── components/           # LoginForm, RegisterForm
-│   │   ├── hooks.ts              # useLogin, useRegister, useLogout
+│   │   ├── components/           # LoginForm, RegisterForm, OtpVerifyForm
+│   │   ├── hooks.ts              # useLogin, useRegister, useLogout, useVerifyOtp, useResendOtp
+│   │   └── index.ts
+│   ├── documents/
+│   │   ├── components/           # DocumentUploadForm, UserDocumentsViewer
+│   │   ├── hooks.ts              # useUploadDocument, useUserDocuments
 │   │   └── index.ts
 │   ├── donations/
 │   │   ├── components/           # DonationForm
@@ -80,15 +97,18 @@ src/
 │   │   ├── hooks.ts              # useAidRequests, useCreateAidRequest
 │   │   └── index.ts
 │   ├── admin/
-│   │   ├── components/           # ApprovalTable
+│   │   ├── components/           # UserManagementTable (block/unblock + document viewer)
 │   │   ├── hooks.ts              # useAdminUsers, useAdminStats
 │   │   └── index.ts
 │   ├── notifications/
 │   │   ├── components/           # NotificationCard, NotificationList
 │   │   ├── hooks.ts              # useNotifications, useMarkRead
 │   │   └── index.ts
-│   └── reports/
-│       ├── components/           # StatsCard
+│   ├── reports/
+│   │   ├── components/           # StatsCard
+│   │   └── index.ts
+│   └── home/
+│       ├── hooks.ts              # usePublicStats (homepage impact counter)
 │       └── index.ts
 │
 ├── global/                       # Shared/reusable code
@@ -145,11 +165,13 @@ features/<name>/
 
 ### 4. Auth Flow
 
-1. User registers via `/api/auth/register` → creates Supabase auth user + profiles row
-2. User logs in via `/api/auth/login` → sets session cookies
-3. `AuthProvider` detects session, loads profile from `profiles` table → sets Zustand store
-4. `middleware.ts` protects `/dashboard/*` routes — redirects unauthenticated users to `/login`
-5. Sidebar shows user name/role, admin-only links conditionally rendered
+1. User registers via `/api/auth/register` → creates Supabase auth user + profiles row. Supabase sends a 6-digit OTP email automatically.
+2. Client redirects to `/upload-documents`. User uploads CNIC (donor/volunteer) or a supporting document (student). Files go directly to the private `cnic-documents` / `student-documents` storage buckets under `${user.id}/` and a row is recorded in `documents` via `POST /api/documents`.
+3. Client redirects to `/verify-otp?email=…`. User enters the 6-digit code → `POST /api/auth/verify-otp` calls `supabase.auth.verifyOtp({ type: 'signup' })`, confirming `email_confirmed_at`.
+4. On subsequent logins, `/api/auth/login` returns `401 { code: "unverified" }` if the email is unconfirmed (client routes back to `/verify-otp`) or `403 { code: "blocked" }` if `profiles.is_blocked` is true.
+5. `AuthProvider` detects the session, loads `profiles` + derives `is_verified` from `email_confirmed_at` → sets the Zustand store.
+6. `middleware.ts` protects `/dashboard/*` routes — redirects unauthenticated users to `/login`. `/upload-documents` and `/verify-otp` are allowed for partially-signed-up users.
+7. Admins can block/unblock any user from the User Management panel and view their uploaded documents (short-lived signed URLs from `GET /api/documents/[userId]`).
 
 ### 5. Server vs Client Components
 

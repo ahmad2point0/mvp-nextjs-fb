@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, type ComponentType } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { usePublicStats } from "@/features/home";
 import {
   DollarSign,
   GraduationCap,
@@ -111,12 +112,19 @@ const faqs = [
   },
 ];
 
-const impactStats = [
-  { value: 1250, suffix: "K+", label: "Donations (Rs)" },
-  { value: 75, suffix: "+", label: "Students Supported" },
-  { value: 48, suffix: "+", label: "Active Volunteers" },
-  { value: 200, suffix: "+", label: "Tasks Completed" },
-];
+/* Format large currency amounts for compact display.
+   1,250,000 → { value: 1250, suffix: "K+" }
+   2,500,000 → { value: 2, suffix: "M+" }
+   850       → { value: 850,  suffix: "+"  } */
+function formatCurrencyStat(amount: number): { value: number; suffix: string } {
+  if (amount >= 1_000_000) {
+    return { value: Math.floor(amount / 1_000_000), suffix: "M+" };
+  }
+  if (amount >= 1_000) {
+    return { value: Math.floor(amount / 1_000), suffix: "K+" };
+  }
+  return { value: amount, suffix: "+" };
+}
 
 /* ─── Icon Card Helper ─── */
 
@@ -158,6 +166,17 @@ function IconCard({
 
 export default function Home() {
   const mainRef = useRef<HTMLDivElement>(null);
+  const { data: stats } = usePublicStats();
+
+  const impactStats = useMemo(() => {
+    const donations = formatCurrencyStat(stats?.totalDonations ?? 0);
+    return [
+      { value: donations.value, suffix: donations.suffix, label: "Donations (Rs)" },
+      { value: stats?.studentsSupported ?? 0, suffix: "+", label: "Students Supported" },
+      { value: stats?.activeVolunteers ?? 0, suffix: "+", label: "Active Volunteers" },
+      { value: stats?.tasksCompleted ?? 0, suffix: "+", label: "Tasks Completed" },
+    ];
+  }, [stats]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -247,25 +266,6 @@ export default function Home() {
         });
       });
 
-      /* ── Impact counter ── */
-      gsap.utils.toArray<HTMLElement>(".stat-number").forEach((el) => {
-        const target = parseInt(el.dataset.value || "0", 10);
-        const obj = { val: 0 };
-        gsap.to(obj, {
-          val: target,
-          duration: 2,
-          ease: "power1.out",
-          scrollTrigger: {
-            trigger: el,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
-          onUpdate: () => {
-            el.textContent = Math.round(obj.val).toLocaleString();
-          },
-        });
-      });
-
       /* ── Dark section parallax ── */
       gsap.utils.toArray<HTMLElement>(".parallax-bg").forEach((el) => {
         gsap.to(el, {
@@ -297,6 +297,35 @@ export default function Home() {
 
     return () => ctx.revert();
   }, []);
+
+  /* ── Impact counter ── runs once stats are loaded so the
+     animation targets the real values from /api/public/stats. */
+  useEffect(() => {
+    if (!stats) return;
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray<HTMLElement>(".stat-number").forEach((el) => {
+        const target = parseInt(el.dataset.value || "0", 10);
+        gsap.killTweensOf(el);
+        el.textContent = "0";
+        const obj = { val: 0 };
+        gsap.to(obj, {
+          val: target,
+          duration: 2,
+          ease: "power1.out",
+          scrollTrigger: {
+            trigger: el,
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+          onUpdate: () => {
+            el.textContent = Math.round(obj.val).toLocaleString();
+          },
+        });
+      });
+    }, mainRef);
+
+    return () => ctx.revert();
+  }, [stats]);
 
   return (
     <div ref={mainRef}>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/global/components";
+import { ApiError } from "@/global/lib/api";
 import { useLogin } from "../hooks";
 
 export function LoginForm() {
@@ -29,7 +30,21 @@ export function LoginForm() {
     login.mutate(
       { email, password },
       {
-        onError: (err) => toast.error(err.message),
+        onError: (err) => {
+          if (err instanceof ApiError) {
+            if (err.code === "unverified") {
+              toast.info("Please verify your email to continue");
+              return; // hook redirects to /verify-otp
+            }
+            if (err.code === "blocked") {
+              toast.error(
+                "Your account has been blocked. Please contact support."
+              );
+              return;
+            }
+          }
+          toast.error(err.message);
+        },
       }
     );
   }

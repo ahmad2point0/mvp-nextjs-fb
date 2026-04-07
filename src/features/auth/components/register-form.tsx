@@ -47,9 +47,12 @@ export function RegisterForm() {
 
   return (
     <div className="max-w-[380px] w-full mx-auto bg-white border border-border rounded-lg p-8 shadow-elevated">
-      <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-6">
+      <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-2">
         Create Account
       </h2>
+      <p className="text-body text-xs text-center mb-6">
+        Next you&apos;ll verify your email and upload identity documents.
+      </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         <select

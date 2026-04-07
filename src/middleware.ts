@@ -1,7 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const publicPaths = ["/", "/about", "/contact", "/login", "/register", "/forgot-password", "/update-password"];
+const publicPaths = [
+  "/",
+  "/about",
+  "/contact",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/update-password",
+  "/upload-documents",
+  "/verify-otp",
+];
 
 // Legacy dashboard sub-routes → tab query param redirects
 const legacyRedirects: Record<string, string> = {

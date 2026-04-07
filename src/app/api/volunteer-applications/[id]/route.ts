@@ -50,11 +50,11 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // If approved, update the user's profile role to "volunteer"
+  // If approved, promote the user to the "volunteer" role
   if (status === "approved") {
     await supabase
       .from("profiles")
-      .update({ role: "volunteer", approved: true })
+      .update({ role: "volunteer" })
       .eq("id", data.user_id);
   }
 

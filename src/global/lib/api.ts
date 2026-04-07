@@ -3,7 +3,9 @@ const BASE_URL = "/api";
 export class ApiError extends Error {
   constructor(
     public status: number,
-    message: string
+    message: string,
+    public code?: string,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = "ApiError";
@@ -13,7 +15,12 @@ export class ApiError extends Error {
 async function handleResponse<T>(response: Response): Promise<T> {
   const data = await response.json();
   if (!response.ok) {
-    throw new ApiError(response.status, data.error || "An error occurred");
+    throw new ApiError(
+      response.status,
+      data.error || "An error occurred",
+      data.code,
+      data
+    );
   }
   return data as T;
 }

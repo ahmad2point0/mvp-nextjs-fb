@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/global/components";
-import { useApprovedVolunteers, useCreateTask } from "../hooks";
+import { useActiveVolunteers, useCreateTask } from "../hooks";
 
 export function TaskAssignmentForm() {
-  const { data: volunteers, isLoading: loadingVolunteers } = useApprovedVolunteers();
+  const { data: volunteers, isLoading: loadingVolunteers } = useActiveVolunteers();
   const createTask = useCreateTask();
 
   const [volunteerId, setVolunteerId] = useState("");

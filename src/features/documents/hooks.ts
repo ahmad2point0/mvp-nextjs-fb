@@ -1,8 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/global/lib/api";
-import { createClient } from "@/global/lib/supabase";
+import { api, ApiError } from "@/global/lib/api";
 
 export type DocumentType = "cnic_front" | "cnic_back" | "student_doc";
 export type DocumentBucket = "cnic-documents" | "student-documents";
@@ -21,38 +20,41 @@ interface UploadDocumentInput {
   bucket: DocumentBucket;
 }
 
+interface UploadDocumentResponse {
+  id: string;
+  storage_path: string;
+  signed_url: string | null;
+}
+
 export function useUploadDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
       file,
-      userId,
       documentType,
       bucket,
     }: UploadDocumentInput) => {
-      const supabase = createClient();
-      const timestamp = Date.now();
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `${userId}/${documentType}_${timestamp}_${safeName}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("document_type", documentType);
+      formData.append("bucket", bucket);
 
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(path, file, { upsert: true });
+      const response = await fetch("/api/documents", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (uploadError) throw uploadError;
-
-      // Record metadata in the documents table
-      const doc = await api.post<{ id: string; storage_path: string }>(
-        "/documents",
-        {
-          document_type: documentType,
-          storage_path: path,
-          bucket,
-        }
-      );
-
-      return doc;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new ApiError(
+          response.status,
+          data.error || "Upload failed",
+          data.code,
+          data
+        );
+      }
+      return data as UploadDocumentResponse;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({

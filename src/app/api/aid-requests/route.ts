@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
+import { validateDonationAmount } from "@/features/donations/constants";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -58,6 +59,11 @@ export async function POST(request: NextRequest) {
       { error: "Aid type, amount, and description are required" },
       { status: 400 }
     );
+  }
+
+  const amountError = validateDonationAmount(Number(amount));
+  if (amountError) {
+    return NextResponse.json({ error: amountError }, { status: 400 });
   }
 
   const { data, error } = await supabase

@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
+import { validatePassword } from "@/global/lib/password-validation";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -10,6 +11,11 @@ export async function POST(request: NextRequest) {
       { error: "Email, password, full name, and role are required" },
       { status: 400 }
     );
+  }
+
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    return NextResponse.json({ error: passwordError }, { status: 400 });
   }
 
   const supabase = await createServerSupabaseClient();

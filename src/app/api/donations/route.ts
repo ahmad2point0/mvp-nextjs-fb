@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
 import { createNotification, notifyAdmins } from "@/global/lib/create-notification";
+import { validateDonationAmount } from "@/features/donations/constants";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -59,6 +60,12 @@ export async function POST(request: NextRequest) {
       { error: "Category, amount, and payment method are required" },
       { status: 400 }
     );
+  }
+
+  const numericAmount = Number(amount);
+  const amountError = validateDonationAmount(numericAmount);
+  if (amountError) {
+    return NextResponse.json({ error: amountError }, { status: 400 });
   }
 
   const { data, error } = await supabase

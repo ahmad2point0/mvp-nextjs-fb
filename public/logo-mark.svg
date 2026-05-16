@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="cseasMarkGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c5cff"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#cseasMarkGrad)"/>
+  <path d="M14 24c0-3.3 2.7-6 6-6h13a3 3 0 0 1 0 6H20v16h13a3 3 0 0 1 0 6H20c-3.3 0-6-2.7-6-6V24Z" fill="#ffffff"/>
+  <path d="M32 18h12c3.3 0 6 2.7 6 6v3a3 3 0 0 1-6 0v-3H32a3 3 0 0 1 0-6Z" fill="#ffffff" fill-opacity="0.8"/>
+  <path d="M36 32h8a3 3 0 0 1 0 6h-8a3 3 0 0 1 0-6Z" fill="#ffffff" fill-opacity="0.95"/>
+  <circle cx="48" cy="44" r="4" fill="#ffffff"/>
+</svg>

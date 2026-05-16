@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/global/components";
@@ -11,9 +12,11 @@ import { useLogin } from "../hooks";
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
+  const lastSubmitAt = useRef(0);
 
   const login = useLogin();
 
@@ -21,11 +24,17 @@ export function LoginForm() {
     e.preventDefault();
     setError("");
 
+    /* Hard guard against rapid double-submits. Even with the disabled
+       button, accidental keyboard double-Enter can fire two requests
+       before React paints — those rapid retries are what trip Supabase
+       Auth's rate limits. */
+    const now = Date.now();
+    if (now - lastSubmitAt.current < 1500) return;
+    lastSubmitAt.current = now;
+
     if (!email) return setError("Email is required");
     if (!email.includes("@")) return setError("Enter a valid email");
     if (!password) return setError("Password is required");
-    if (password.length < 6)
-      return setError("Password must be at least 6 characters");
 
     login.mutate(
       { email, password },
@@ -40,6 +49,10 @@ export function LoginForm() {
               toast.error(
                 "Your account has been blocked. Please contact support."
               );
+              return;
+            }
+            if (err.code === "rate_limited") {
+              toast.info("Please wait a moment and try again.");
               return;
             }
           }
@@ -73,13 +86,23 @@ export function LoginForm() {
           className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
-        />
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-3 pr-10 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((s) => !s)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-body hover:text-primary"
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
 
         {error && <p className="text-ruby text-xs">{error}</p>}
 

@@ -2,7 +2,16 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, CheckCircle2, X } from "lucide-react";
+import {
+  Upload,
+  CheckCircle2,
+  X,
+  Info,
+  GraduationCap,
+  Receipt,
+  FileText,
+  HomeIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Card, Button } from "@/global/components";
 import { useAuthStore } from "@/global/stores/auth-store";
@@ -29,7 +38,7 @@ function slotsForRole(role: string | undefined): Slot[] {
         type: "student_doc",
         bucket: "student-documents",
         label: "Supporting Document",
-        hint: "Upload one document that supports your student status (student ID, enrollment letter, etc.)",
+        hint: "Upload one clear photo of a document from the required list below.",
       },
     ];
   }
@@ -50,11 +59,35 @@ function slotsForRole(role: string | undefined): Slot[] {
   ];
 }
 
+const studentRequiredDocs = [
+  {
+    icon: GraduationCap,
+    title: "Student ID Card or Enrollment Letter",
+    desc: "Issued by your current school, college, or university. Must show your name and the current academic year.",
+  },
+  {
+    icon: Receipt,
+    title: "Most Recent Fee Challan or Fee Voucher",
+    desc: "Demonstrates the cost you need help covering. Unpaid challans help us prioritise.",
+  },
+  {
+    icon: FileText,
+    title: "Proof of Financial Need",
+    desc: "Any one of: guardian's salary slip, income certificate, BISP/Ehsaas letter, utility bill, or a written statement from a local authority or school principal.",
+  },
+  {
+    icon: HomeIcon,
+    title: "CNIC or B-Form (Yours or Guardian's)",
+    desc: "Government-issued ID confirming your identity. For students under 18, the guardian's CNIC is acceptable.",
+  },
+];
+
 export function DocumentUploadForm() {
   const router = useRouter();
   const { user } = useAuthStore();
   const uploadDocument = useUploadDocument();
 
+  const isStudent = user?.role === "student";
   const slots = slotsForRole(user?.role);
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
@@ -121,17 +154,64 @@ export function DocumentUploadForm() {
   const isPending = uploadDocument.isPending;
 
   return (
-    <Card bordered className="max-w-[560px] mx-auto">
+    <Card bordered className="max-w-[640px] mx-auto">
       <StepIndicator currentStep={3} />
 
       <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-2">
         Upload Verification Documents
       </h2>
       <p className="text-body text-sm text-center mb-6">
-        {user?.role === "student"
-          ? "Upload a supporting document to confirm your student status."
+        {isStudent
+          ? "Help us confirm you're a student and demonstrate your need for educational support."
           : "Upload both sides of your CNIC to complete verification."}
       </p>
+
+      {isStudent && (
+        <div className="mb-6 rounded-lg border border-primary/20 bg-primary/[0.03] p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Info className="w-4 h-4 text-primary" />
+            <h3 className="text-heading text-sm font-medium">
+              Required documents to prove eligibility
+            </h3>
+          </div>
+          <p className="text-body text-xs mb-4">
+            To receive donations, we ask every student to provide proof of
+            enrolment and financial need. Please prepare a clear photo of{" "}
+            <b>any one</b> of the following — pick whichever you can produce
+            most easily. Admins may follow up if more is needed.
+          </p>
+
+          <ul className="flex flex-col gap-3">
+            {studentRequiredDocs.map((doc) => {
+              const Icon = doc.icon;
+              return (
+                <li
+                  key={doc.title}
+                  className="flex gap-3 items-start rounded-md border border-border bg-white p-3"
+                >
+                  <span className="shrink-0 mt-0.5 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                    <Icon className="w-3.5 h-3.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-heading text-sm font-medium leading-snug">
+                      {doc.title}
+                    </p>
+                    <p className="text-body text-xs mt-0.5 leading-relaxed">
+                      {doc.desc}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-4 rounded border border-amber-200 bg-amber-50 text-amber-800 text-xs p-2.5 leading-relaxed">
+            <b>Tips:</b> photos must be sharp and well-lit, all four corners
+            visible, names and dates readable. JPEG, PNG, or WebP up to 5 MB.
+            Fake or altered documents will lead to your account being blocked.
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {slots.map((slot) => (

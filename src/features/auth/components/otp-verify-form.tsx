@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Card, Button } from "@/global/components";
+import { ApiError } from "@/global/lib/api";
 import { useResendOtp, useVerifyOtp } from "../hooks";
 
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -15,6 +16,7 @@ export function OtpVerifyForm() {
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const lastSubmitAt = useRef(0);
 
   const verifyOtp = useVerifyOtp();
   const resendOtp = useResendOtp();
@@ -29,6 +31,10 @@ export function OtpVerifyForm() {
     e.preventDefault();
     setError("");
 
+    const now = Date.now();
+    if (now - lastSubmitAt.current < 1500) return;
+    lastSubmitAt.current = now;
+
     if (!email) return setError("Missing email. Please register again.");
     if (token.length < 6) return setError("Enter the verification code");
 
@@ -36,6 +42,12 @@ export function OtpVerifyForm() {
       { email, token },
       {
         onError: (err) => {
+          if (err instanceof ApiError && err.code === "rate_limited") {
+            const msg = "Please wait a moment and try again.";
+            setError(msg);
+            toast.info(msg);
+            return;
+          }
           setError(err.message);
           toast.error(err.message);
         },
@@ -50,7 +62,13 @@ export function OtpVerifyForm() {
         toast.success("New code sent to your email");
         setCooldown(RESEND_COOLDOWN_SECONDS);
       },
-      onError: (err) => toast.error(err.message),
+      onError: (err) => {
+        if (err instanceof ApiError && err.code === "rate_limited") {
+          toast.info("Please wait a moment and try again.");
+          return;
+        }
+        toast.error(err.message);
+      },
     });
   }
 

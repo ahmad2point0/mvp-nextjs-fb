@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   title: "CSEAS - Community Support & Education Aid System",
   description:
     "Connecting donors, volunteers, and underprivileged students to empower education and build communities.",
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({

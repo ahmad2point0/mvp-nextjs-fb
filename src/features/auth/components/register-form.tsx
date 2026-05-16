@@ -2,14 +2,35 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Eye, EyeOff, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/global/components";
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  validatePassword,
+} from "@/global/lib/password-validation";
 import { useRegister } from "../hooks";
 
 const roles = [
   { value: "donor", label: "Donor" },
   { value: "volunteer", label: "Volunteer" },
   { value: "student", label: "Student" },
+];
+
+const passwordChecks = [
+  {
+    label: `Between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters`,
+    test: (p: string) =>
+      p.length >= PASSWORD_MIN_LENGTH && p.length <= PASSWORD_MAX_LENGTH,
+  },
+  { label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+  { label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+  { label: "One number", test: (p: string) => /\d/.test(p) },
+  {
+    label: "One special character (!@#$%^&*...)",
+    test: (p: string) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p),
+  },
 ];
 
 export function RegisterForm() {
@@ -19,6 +40,9 @@ export function RegisterForm() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showRequirements, setShowRequirements] = useState(false);
   const [error, setError] = useState("");
 
   const register = useRegister();
@@ -31,9 +55,10 @@ export function RegisterForm() {
     if (!name.trim()) return setError("Full name is required");
     if (!email) return setError("Email is required");
     if (!email.includes("@")) return setError("Enter a valid email");
-    if (!password) return setError("Password is required");
-    if (password.length < 6)
-      return setError("Password must be at least 6 characters");
+
+    const passwordError = validatePassword(password);
+    if (passwordError) return setError(passwordError);
+
     if (!confirm) return setError("Confirm your password");
     if (password !== confirm) return setError("Passwords do not match");
 
@@ -94,21 +119,65 @@ export function RegisterForm() {
           className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
-        />
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            maxLength={PASSWORD_MAX_LENGTH}
+            onFocus={() => setShowRequirements(true)}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-3 pr-10 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((s) => !s)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-body hover:text-primary"
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
 
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          className="w-full px-3 py-3 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
-        />
+        {(showRequirements || password.length > 0) && (
+          <ul className="text-xs space-y-1 -mt-1.5 px-1">
+            {passwordChecks.map((c) => {
+              const ok = c.test(password);
+              return (
+                <li
+                  key={c.label}
+                  className={`flex items-center gap-1.5 ${ok ? "text-emerald-600" : "text-body"}`}
+                >
+                  {ok ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <X className="w-3 h-3" />
+                  )}
+                  {c.label}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="relative">
+          <input
+            type={showConfirm ? "text" : "password"}
+            placeholder="Confirm Password"
+            value={confirm}
+            maxLength={PASSWORD_MAX_LENGTH}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="w-full px-3 py-3 pr-10 rounded border border-border text-sm text-heading placeholder:text-body focus:border-primary focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirm((s) => !s)}
+            aria-label={showConfirm ? "Hide password" : "Show password"}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-body hover:text-primary"
+          >
+            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
 
         {error && <p className="text-ruby text-xs">{error}</p>}
 

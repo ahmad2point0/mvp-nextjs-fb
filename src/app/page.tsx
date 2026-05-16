@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, type ComponentType } from "react";
 import gsap from "gsap";
@@ -349,10 +350,21 @@ export default function Home() {
         />
 
         <div className="relative text-center text-white max-w-[900px] px-6 py-20">
-          {/* Badge */}
-          <div className="hero-badge inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-white/10 bg-white/5 text-xs text-white/60">
-            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-            Empowering 75+ students across communities
+          {/* Logo */}
+          <div className="hero-badge flex flex-col items-center gap-3 mb-8">
+            <div className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 p-3 shadow-[0_0_40px_rgba(83,58,253,0.35)]">
+              <Image
+                src="/logo-mark.svg"
+                alt="CSEAS logo"
+                width={64}
+                height={64}
+                priority
+              />
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-white/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+              Empowering 75+ students across communities
+            </div>
           </div>
 
           <h1 className="hero-heading text-5xl md:text-[64px] font-light leading-[1.05] tracking-[-1.6px]">

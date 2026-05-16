@@ -1,14 +1,13 @@
 import { createServerSupabaseClient } from "@/global/lib/supabase-server";
+import { validatePassword } from "@/global/lib/password-validation";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
   const { password } = await request.json();
 
-  if (!password || password.length < 6) {
-    return NextResponse.json(
-      { error: "Password must be at least 6 characters" },
-      { status: 400 }
-    );
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    return NextResponse.json({ error: passwordError }, { status: 400 });
   }
 
   const supabase = await createServerSupabaseClient();

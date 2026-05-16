@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
@@ -21,12 +22,27 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
-      <div className="mx-auto max-w-[1080px] flex items-center justify-between px-6 py-3">
-        <Link href="/" className="text-heading font-light text-lg tracking-tight">
-          CSEAS
+      <div className="mx-auto max-w-[1200px] flex items-center justify-between gap-4 px-6 py-3">
+        <Link href="/" className="flex items-center gap-2.5 min-w-0">
+          <Image
+            src="/logo.svg"
+            alt="CSEAS"
+            width={36}
+            height={36}
+            priority
+            className="shrink-0"
+          />
+          <span className="flex flex-col leading-tight min-w-0">
+            <span className="text-heading text-[15px] font-medium tracking-tight truncate">
+              Community Support &amp; Education Aid System
+            </span>
+            <span className="text-body text-[10px] uppercase tracking-[0.18em] hidden sm:block">
+              CSEAS Platform
+            </span>
+          </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -42,7 +58,7 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
           <Link
             href="/login"
             className="text-sm font-normal text-primary hover:text-primary-hover transition-colors"
@@ -59,7 +75,7 @@ export function Navbar() {
 
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-heading hover:text-primary transition-colors"
+          className="lg:hidden p-2 text-heading hover:text-primary transition-colors shrink-0"
           aria-label="Toggle menu"
         >
           {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -67,7 +83,7 @@ export function Navbar() {
       </div>
 
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           isOpen ? "max-h-[300px] border-t border-border" : "max-h-0"
         }`}
       >

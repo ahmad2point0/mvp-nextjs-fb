@@ -7,6 +7,7 @@ interface AdminStats {
   totalDonations: number;
   pendingAidRequests: number;
   activeVolunteers: number;
+  totalApplications: number;
 }
 
 export interface AdminUserFilters {

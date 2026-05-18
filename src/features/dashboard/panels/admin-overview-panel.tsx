@@ -23,18 +23,18 @@ export function AdminOverviewPanel() {
 
   const statCards = [
     {
-      title: "Total Donations",
+      title: "Total Applications",
       value: isLoading
         ? "..."
-        : `Rs. ${(stats?.totalDonations ?? 0).toLocaleString()}`,
+        : String(stats?.totalApplications ?? 0),
+    },
+    {
+      title: "Number of Donations",
+      value: isLoading ? "..." : String(stats?.totalDonations ?? 0),
     },
     {
       title: "Total Users",
       value: isLoading ? "..." : String(stats?.totalUsers ?? 0),
-    },
-    {
-      title: "Active Volunteers",
-      value: isLoading ? "..." : String(stats?.activeVolunteers ?? 0),
     },
     {
       title: "Pending Aid Requests",

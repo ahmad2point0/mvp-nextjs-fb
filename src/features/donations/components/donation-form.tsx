@@ -21,6 +21,9 @@ import {
   validateDonationAmount,
 } from "../constants";
 
+/* For free-form donations, infer the donor's parent category from the
+   subcategory they pick. */
+
 interface DonationFormProps {
   aidRequestId?: string | null;
   onDonated?: () => void;

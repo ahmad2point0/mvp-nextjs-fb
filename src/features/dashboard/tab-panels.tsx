@@ -88,12 +88,6 @@ const ProfilePanel = dynamic(
   { loading: () => TabSkeleton() }
 );
 
-const SettingsPanel = dynamic(
-  () =>
-    import("./panels/settings-panel").then((m) => m.SettingsPanel),
-  { loading: () => TabSkeleton() }
-);
-
 const ApplyPanel = dynamic(
   () => import("./panels/apply-panel").then((m) => m.ApplyPanel),
   { loading: () => FormSkeleton() }
@@ -139,8 +133,6 @@ export function PanelRouter({
       return <NotificationsPanel />;
     case "profile":
       return <ProfilePanel />;
-    case "settings":
-      return <SettingsPanel />;
     case "apply":
       return <ApplyPanel />;
     default:

@@ -68,7 +68,7 @@ export function DonationsPanel() {
                 <thead>
                   <tr className="bg-brand-dark text-white text-left text-sm">
                     <th className="px-4 py-3">Category</th>
-                    <th className="px-4 py-3">Amount</th>
+                    {!isAdmin && <th className="px-4 py-3">Amount</th>}
                     <th className="px-4 py-3">Payment</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Receipt</th>
@@ -82,9 +82,11 @@ export function DonationsPanel() {
                       <td className="px-4 py-3 text-sm text-heading">
                         {d.subcategory || d.category}
                       </td>
-                      <td className="px-4 py-3 text-sm text-body">
-                        Rs. {Number(d.amount).toLocaleString()}
-                      </td>
+                      {!isAdmin && (
+                        <td className="px-4 py-3 text-sm text-body">
+                          Rs. {Number(d.amount).toLocaleString()}
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-sm text-body">
                         {d.payment_method}
                       </td>

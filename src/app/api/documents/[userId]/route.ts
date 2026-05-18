@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from "@/global/lib/supabase-server";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   const { userId } = await params;
@@ -16,28 +16,40 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Allow self or admin
-  if (user.id !== userId) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    if (profile?.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const isSelf = user.id === userId;
+  const isAdmin = profile?.role === "admin";
+  const isDonor = profile?.role === "donor";
+
+  // Donors may view a student's docs only when scoped to an aid request they can see.
+  const aidRequestId = request.nextUrl.searchParams.get("aid_request_id");
+
+  if (!isSelf && !isAdmin && !(isDonor && aidRequestId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data: docs, error } = await supabase
+  let query = supabase
     .from("documents")
-    .select("id, document_type, storage_path, bucket, uploaded_at")
+    .select(
+      "id, document_type, storage_path, bucket, uploaded_at, verification_status, verification_notes, aid_request_id"
+    )
     .eq("user_id", userId);
+
+  if (aidRequestId) {
+    query = query.eq("aid_request_id", aidRequestId);
+  }
+
+  const { data: docs, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Generate a signed URL for each document (10 min expiry)
   const signed = await Promise.all(
     (docs ?? []).map(async (doc) => {
       const { data: sig } = await supabase.storage
@@ -47,6 +59,9 @@ export async function GET(
         id: doc.id,
         document_type: doc.document_type,
         uploaded_at: doc.uploaded_at,
+        verification_status: doc.verification_status,
+        verification_notes: doc.verification_notes,
+        aid_request_id: doc.aid_request_id,
         signed_url: sig?.signedUrl ?? null,
       };
     })

@@ -91,6 +91,41 @@ export async function POST(request: NextRequest) {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const storage_path = `${user.id}/${document_type}_${timestamp}_${safeName}`;
 
+  /* CNIC slots are 1-per-type (partial unique). A re-upload should REPLACE
+     the previous row + file, not collide. For student_doc we insert freely
+     so multiple supporting docs can accompany aid requests. */
+  const isCnic =
+    document_type === "cnic_front" || document_type === "cnic_back";
+
+  if (isCnic) {
+    const { data: prior } = await supabase
+      .from("documents")
+      .select("id, storage_path, bucket")
+      .eq("user_id", user.id)
+      .eq("document_type", document_type);
+
+    if (prior && prior.length > 0) {
+      const pathsByBucket = new Map<string, string[]>();
+      for (const row of prior) {
+        const list = pathsByBucket.get(row.bucket) ?? [];
+        list.push(row.storage_path);
+        pathsByBucket.set(row.bucket, list);
+      }
+      await Promise.all(
+        Array.from(pathsByBucket.entries()).map(([b, paths]) =>
+          supabase.storage.from(b).remove(paths)
+        )
+      );
+      await supabase
+        .from("documents")
+        .delete()
+        .in(
+          "id",
+          prior.map((r) => r.id)
+        );
+    }
+  }
+
   const { error: uploadError } = await supabase.storage
     .from(bucket)
     .upload(storage_path, file, {
@@ -105,9 +140,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  /* Insert (not upsert) so a request can hold multiple supporting docs.
-     CNIC slots still effectively replace via aid_request_id IS NULL +
-     latest-wins lookup on the read side. */
   const insertRow: Record<string, unknown> = {
     user_id: user.id,
     document_type,

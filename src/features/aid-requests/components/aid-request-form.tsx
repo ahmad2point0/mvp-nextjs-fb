@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { Info, Upload, X, FileText, CheckCircle2 } from "lucide-react";
+import { Info, Upload, X, FileText, CheckCircle2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Card, Button } from "@/global/components";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/features/donations/constants";
 import { useAuthStore } from "@/global/stores/auth-store";
 import { useUploadDocument } from "@/features/documents/hooks";
+import { UserDocumentsViewer } from "@/features/documents/components/user-documents-viewer";
 import { useCreateAidRequest } from "../hooks";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -39,6 +40,7 @@ export function AidRequestForm() {
   const [error, setError] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
+  const [showDocsViewer, setShowDocsViewer] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadDocument = useUploadDocument();
@@ -168,29 +170,9 @@ export function AidRequestForm() {
 
   return (
     <Card bordered className="max-w-[560px] mx-auto">
-      <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-3">
+      <h2 className="text-heading text-2xl font-light tracking-tight text-center mb-5">
         Education Aid Request
       </h2>
-
-      <div className="mb-5 rounded-lg border border-primary/20 bg-primary/[0.03] p-3.5">
-        <div className="flex items-center gap-2 mb-2">
-          <Info className="w-4 h-4 text-primary" />
-          <h3 className="text-heading text-sm font-medium">
-            Documents are mandatory
-          </h3>
-        </div>
-        <p className="text-body text-xs leading-relaxed">
-          Each request must include supporting proof so donors can verify your
-          need. Required documents depend on the category you select below.{" "}
-          <Link
-            href="/upload-documents"
-            className="text-primary hover:text-primary-hover underline"
-          >
-            View revised documents on your profile
-          </Link>
-          .
-        </p>
-      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         <select
@@ -267,6 +249,28 @@ export function AidRequestForm() {
               Supporting Documents
             </h4>
           </div>
+
+          <div className="mb-3 rounded-md border border-primary/20 bg-primary/4 p-2.5">
+            <div className="flex items-center gap-2 mb-1">
+              <Info className="w-3.5 h-3.5 text-primary" />
+              <h5 className="text-heading text-xs font-medium">
+                Documents are mandatory
+              </h5>
+            </div>
+            <p className="text-body text-[11px] leading-relaxed">
+              Each request must include supporting proof so donors can verify
+              your need. Required documents depend on the category you select
+              above.{" "}
+              <Link
+                href="/upload-documents"
+                className="text-primary hover:text-primary-hover underline"
+              >
+                View revised documents on your profile
+              </Link>
+              .
+            </p>
+          </div>
+
           {requiredDocs.length > 0 && (
             <p className="text-body text-xs mb-3">
               Required for <b>{category}</b>: {requiredDocs.join(", ")}.
@@ -323,6 +327,17 @@ export function AidRequestForm() {
             </div>
           )}
 
+          <div className="mt-3 pt-3 border-t border-border">
+            <button
+              type="button"
+              onClick={() => setShowDocsViewer(true)}
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover hover:underline"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              View Uploaded Documents
+            </button>
+          </div>
+
           {uploadedDocs.length > 0 && (
             <div className="mt-3 space-y-1.5">
               <p className="text-xs text-body flex items-center gap-1">
@@ -371,6 +386,14 @@ export function AidRequestForm() {
           {createRequest.isPending ? "Submitting..." : "Submit Aid Request"}
         </Button>
       </form>
+
+      {showDocsViewer && user && (
+        <UserDocumentsViewer
+          userId={user.id}
+          userName={user.full_name || user.email}
+          onClose={() => setShowDocsViewer(false)}
+        />
+      )}
     </Card>
   );
 }

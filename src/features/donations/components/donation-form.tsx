@@ -301,6 +301,14 @@ export function DonationForm({ aidRequestId, onDonated }: DonationFormProps) {
               ))}
             </select>
 
+            {payment === "Self Payment" && (
+              <p className="text-[11px] text-body -mt-1.5 px-1">
+                Note: TCS delivery/processing charges apply on top of your
+                donation, so the minimum amount is Rs.{" "}
+                {MIN_DONATION_AMOUNT.toLocaleString()}.
+              </p>
+            )}
+
             <input
               type="text"
               placeholder="Transaction ID / Reference No"

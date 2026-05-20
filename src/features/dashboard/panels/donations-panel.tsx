@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { FileText, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { DonationForm } from "@/features/donations";
+import { SupportedRequestsList } from "@/features/aid-requests";
 import { useDonations, useUpdateDonationStatus } from "@/features/donations/hooks";
 import { useAuthStore } from "@/global/stores/auth-store";
 import { Pagination } from "@/global/components";
@@ -52,6 +53,9 @@ export function DonationsPanel() {
       {!isAdmin && (
         <DonationForm aidRequestId={aidRequestId} onDonated={handleDonated} />
       )}
+
+      {/* Donors: requests they've accepted, with student contact revealed */}
+      {!isAdmin && <SupportedRequestsList />}
 
       <div>
         <h3 className="text-heading text-lg font-light tracking-tight mb-4">

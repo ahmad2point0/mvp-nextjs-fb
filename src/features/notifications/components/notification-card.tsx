@@ -41,7 +41,7 @@ export function NotificationCard({
       {!read && onMarkRead && (
         <button
           onClick={onMarkRead}
-          className="text-xs text-primary hover:text-primary-hover shrink-0"
+          className="text-xs text-primary font-medium hover:underline underline-offset-2 shrink-0"
         >
           Mark read
         </button>

@@ -1,21 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, FileText, MapPin } from "lucide-react";
+import { CheckCircle, Eye, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { AidRequestForm } from "@/features/aid-requests";
+import { AidRequestForm, AidRequestDetailsModal } from "@/features/aid-requests";
 import {
   useAidRequests,
   useAcceptAidRequest,
   type AidRequest,
 } from "@/features/aid-requests/hooks";
-import { UserDocumentsViewer } from "@/features/documents";
 import { useAuthStore } from "@/global/stores/auth-store";
 import { Button, Pagination } from "@/global/components";
-import {
-  CASH_PAYMENT_METHODS,
-  ITEM_DELIVERY_CATEGORIES,
-} from "@/features/donations/constants";
+import { ITEM_DELIVERY_CATEGORIES } from "@/features/donations/constants";
 
 const PAGE_SIZE = 10;
 
@@ -34,27 +30,28 @@ export function AidRequestsPanel() {
   const accept = useAcceptAidRequest();
 
   const [page, setPage] = useState(1);
-  const [viewingDocsFor, setViewingDocsFor] = useState<AidRequest | null>(null);
-  const [paymentMethods, setPaymentMethods] = useState<Record<string, string>>(
-    {}
-  );
+  const [modalRequest, setModalRequest] = useState<AidRequest | null>(null);
+  const [modalMode, setModalMode] = useState<"view" | "confirm">("view");
 
   const totalPages = Math.ceil((requests?.length ?? 0) / PAGE_SIZE);
   const paginated = requests?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  function handleAccept(request: AidRequest) {
-    const method = paymentMethods[request.id];
-    if (!method) {
-      toast.error("Choose a payment method first");
-      return;
-    }
+  function openModal(request: AidRequest, mode: "view" | "confirm") {
+    setModalMode(mode);
+    setModalRequest(request);
+  }
+
+  function handleAccept(paymentMethod: string) {
+    if (!modalRequest) return;
     accept.mutate(
-      { requestId: request.id, payment_method: method },
+      { requestId: modalRequest.id, payment_method: paymentMethod },
       {
-        onSuccess: () =>
+        onSuccess: () => {
           toast.success(
             "Request accepted! It is now assigned exclusively to you."
-          ),
+          );
+          setModalRequest(null);
+        },
         onError: (err) => toast.error(err.message),
       }
     );
@@ -136,45 +133,20 @@ export function AidRequestsPanel() {
                       </p>
                     )}
 
-                    <Button
-                      variant="neutral"
-                      onClick={() =>
-                        setViewingDocsFor(r)
-                      }
-                      className="text-xs px-3 py-1.5 h-auto justify-center"
-                    >
-                      <FileText className="w-3.5 h-3.5 mr-1" />
-                      View Supporting Documents
-                    </Button>
-
-                    <div className="flex flex-col gap-1.5">
-                      <select
-                        value={paymentMethods[r.id] ?? ""}
-                        onChange={(e) =>
-                          setPaymentMethods((prev) => ({
-                            ...prev,
-                            [r.id]: e.target.value,
-                          }))
-                        }
-                        className="w-full px-2 py-1.5 rounded border border-border text-xs text-heading focus:border-primary focus:outline-none"
-                      >
-                        <option value="" disabled>
-                          Choose payment method
-                        </option>
-                        {CASH_PAYMENT_METHODS.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
-                      </select>
-
+                    <div className="flex gap-2 mt-auto">
                       <Button
-                        fullWidth
-                        onClick={() => handleAccept(r)}
-                        disabled={accept.isPending}
-                        className="text-xs px-3 py-1.5 h-auto"
+                        variant="neutral"
+                        onClick={() => openModal(r, "view")}
+                        className="flex-1 text-xs px-3 py-1.5 h-auto justify-center"
                       >
-                        {accept.isPending ? "Accepting..." : "Accept Request"}
+                        <Eye className="w-3.5 h-3.5 mr-1" />
+                        View Details
+                      </Button>
+                      <Button
+                        onClick={() => openModal(r, "confirm")}
+                        className="flex-1 text-xs px-3 py-1.5 h-auto justify-center"
+                      >
+                        Accept Request
                       </Button>
                     </div>
                   </div>
@@ -245,12 +217,13 @@ export function AidRequestsPanel() {
         )}
       </div>
 
-      {viewingDocsFor && (
-        <UserDocumentsViewer
-          userId={viewingDocsFor.student_id}
-          userName={`Aid Request — ${viewingDocsFor.aid_type}`}
-          aidRequestId={viewingDocsFor.id}
-          onClose={() => setViewingDocsFor(null)}
+      {modalRequest && (
+        <AidRequestDetailsModal
+          request={modalRequest}
+          mode={modalMode}
+          onClose={() => setModalRequest(null)}
+          onConfirm={handleAccept}
+          isConfirming={accept.isPending}
         />
       )}
     </div>

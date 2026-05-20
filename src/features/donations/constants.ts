@@ -1,5 +1,7 @@
-/* Cash donation amount bounds (PKR). Capped at 5 digits per product spec. */
-export const MIN_DONATION_AMOUNT = 100;
+/* Cash donation amount bounds (PKR). Capped at 5 digits per product spec.
+   Minimum is Rs. 1,000 because TCS delivery/processing charges apply on
+   top of the donation, so smaller amounts aren't viable. */
+export const MIN_DONATION_AMOUNT = 1000;
 export const MAX_DONATION_AMOUNT = 99_999;
 
 /* Aid-request fulfillment uses a fixed token amount so donors don't

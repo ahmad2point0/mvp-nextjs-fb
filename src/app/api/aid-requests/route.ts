@@ -28,9 +28,16 @@ export async function GET(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
+  /* Reveal the student's contact only on a donor's own accepted
+     requests (scope=mine). The broadcast/browse view stays anonymous. */
+  const selectClause =
+    profile?.role === "donor" && scope === "mine"
+      ? "*, student:profiles!aid_requests_student_id_fkey(full_name, phone)"
+      : "*";
+
   let query = supabase
     .from("aid_requests")
-    .select("*")
+    .select(selectClause)
     .order("created_at", { ascending: false });
 
   if (profile?.role === "admin") {

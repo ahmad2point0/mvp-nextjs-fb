@@ -14,6 +14,9 @@ export interface AidRequest {
   accepted_at: string | null;
   documents_verified: boolean;
   created_at: string;
+  /* Only populated for a donor's own accepted requests (scope=mine);
+     null/undefined in the anonymous browse view. */
+  student?: { full_name: string | null; phone: string | null } | null;
 }
 
 interface CreateAidRequestInput {
